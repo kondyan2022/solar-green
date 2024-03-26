@@ -17,7 +17,7 @@ describe("Solar Green Token", function () {
     return { token, deployer, user1, user2, user3 };
   }
 
-  it("token should be created", async function () {
+  it("token contract should be created", async function () {
     const { token, deployer } = await loadFixture(deploy);
 
     expect(await token.totalSupply()).to.eq(
@@ -76,12 +76,119 @@ describe("Solar Green Token", function () {
     ).to.be.revertedWithCustomError(token, "AccessControlUnauthorizedAccount");
   });
 
-  it("token should be burned", async function () {
+  it("tokens should be burned", async function () {
     const { token, deployer } = await loadFixture(deploy);
+    const initialSupply = await token.totalSupply();
     const amount = await token.withDecimals(10);
-    const tx = await token.burn(amount);
+    const tx1 = await token.burn(amount);
+    await tx1.wait();
+    await expect(tx1).to.changeTokenBalance(token, deployer, -amount);
+    expect(await token.totalSupply()).to.eq(initialSupply - amount);
+  });
+
+  it("tokens should be transferred", async function () {
+    const { token, deployer, user1, user2 } = await loadFixture(deploy);
+    const tx = await token.grantBlackListerRole(user1);
     await tx.wait();
-    await expect(tx).to.changeTokenBalance(token, deployer, -amount);
+    const amount = await token.withDecimals(10);
+    const tx1 = await token.transfer(user1, amount);
+    await tx1.wait();
+    await expect(tx1).to.changeTokenBalances(
+      token,
+      [deployer, user1],
+      [-amount, amount]
+    );
+
+    const tx2 = await token.connect(user1).transfer(user2, amount / 2n);
+    await tx2.wait();
+    await expect(tx2).to.changeTokenBalances(
+      token,
+      [user1, user2],
+      [-amount / 2n, amount / 2n]
+    );
+    const tx3 = await token.connect(user2).transfer(deployer, amount / 2n);
+    await tx3.wait();
+    await expect(tx3).to.changeTokenBalances(
+      token,
+      [user2, deployer],
+      [-amount / 2n, amount / 2n]
+    );
+  });
+
+  it("tokens should be burned only with DEFAULT_ADMIN_ROLE", async function () {
+    const { token, user1, user2 } = await loadFixture(deploy);
+
+    const tx = await token.grantBlackListerRole(user1);
+    await tx.wait();
+
+    const amount = await token.withDecimals(10);
+    const tx1 = await token.transfer(user1, amount);
+    await tx1.wait();
+    const tx2 = await token.transfer(user1, amount);
+    await tx2.wait();
+    await expect(
+      token.connect(user1).burn(amount)
+    ).to.be.revertedWithCustomError(token, "AccessControlUnauthorizedAccount");
+    await expect(
+      token.connect(user2).burn(amount)
+    ).to.be.revertedWithCustomError(token, "AccessControlUnauthorizedAccount");
+  });
+
+  it("tokens should be burned from address(it needs approve by address owner)", async function () {
+    const { token, deployer, user1 } = await loadFixture(deploy);
+    const amount = await token.withDecimals(10);
+    const initialSupply = await token.totalSupply();
+    const tx = await token.transfer(user1, amount);
+    await tx.wait();
+
+    await expect(token.burnFrom(user1, amount)).to.be.revertedWithCustomError(
+      token,
+      "ERC20InsufficientAllowance"
+    );
+
+    const txApprove = await token.connect(user1).approve(deployer, amount);
+    await txApprove.wait();
+
+    const txBurn = await token.burnFrom(user1, amount);
+    await txBurn.wait();
+    await expect(txBurn).to.changeTokenBalance(token, user1, -amount);
+    expect(await token.totalSupply()).to.eq(initialSupply - amount);
+  });
+
+  it("tokens should be burned from address only with DEFAULT_ADMIN_ROLE", async function () {
+    const { token, user1, user2 } = await loadFixture(deploy);
+    const amount = await token.withDecimals(10);
+    const initialSupply = await token.totalSupply();
+    await (await token.grantBlackListerRole(user1)).wait();
+
+    await (await token.transfer(user1, amount)).wait();
+    await (await token.transfer(user2, amount)).wait();
+    await (await token.connect(user1).approve(user2, amount)).wait();
+    await (await token.connect(user2).approve(user2, amount)).wait();
+    await expect(
+      token.connect(user2).burnFrom(user1, amount)
+    ).to.be.revertedWithCustomError(token, "AccessControlUnauthorizedAccount");
+    await expect(
+      token.connect(user1).burnFrom(user2, amount)
+    ).to.be.revertedWithCustomError(token, "AccessControlUnauthorizedAccount");
+  });
+
+  it("tokens should not be burned if not enough", async function () {
+    const { token, deployer, user1 } = await loadFixture(deploy);
+    const amount = await token.withDecimals(10);
+    const initialSupply = await token.totalSupply();
+
+    await expect(token.burn(initialSupply + 1n)).to.be.revertedWithCustomError(
+      token,
+      "ERC20InsufficientBalance"
+    );
+
+    await (await token.transfer(user1, amount)).wait();
+
+    await (await token.connect(user1).approve(deployer, amount + 1n)).wait();
+    await expect(
+      token.burnFrom(user1, amount + 1n)
+    ).to.be.revertedWithCustomError(token, "ERC20InsufficientBalance");
   });
 
   //   it("token should be transferred", async function () {
