@@ -10,13 +10,19 @@ contract SolarGreenToken is ERC20, ERC20Burnable, AccessControl {
     bytes32 public constant BLACKLISTER_ROLE = keccak256("BLACKLISTER_ROLE");
     mapping(address => bool) blacklist;
 
+    event EventBlacklistChange(
+        address indexed blacklister,
+        address indexed user,
+        bool blacklisted
+    );
+
     modifier senderNotBlacklisted() {
-        require(!isBlacklisted(msg.sender), "address in blacklist");
+        require(!isBlacklisted(msg.sender), "sender blacklisted");
         _;
     }
 
     modifier addressNotBlacklisted(address _address) {
-        require(!isBlacklisted(_address), "address in blacklist");
+        require(!isBlacklisted(_address), "address blacklisted");
         _;
     }
 
@@ -48,7 +54,12 @@ contract SolarGreenToken is ERC20, ERC20Burnable, AccessControl {
     function burnFrom(
         address account,
         uint256 value
-    ) public override onlyRole(DEFAULT_ADMIN_ROLE) {
+    )
+        public
+        override
+        onlyRole(DEFAULT_ADMIN_ROLE)
+        addressNotBlacklisted(account)
+    {
         super.burnFrom(account, value);
     }
 
@@ -82,7 +93,7 @@ contract SolarGreenToken is ERC20, ERC20Burnable, AccessControl {
 
     function grantBlackListerRole(
         address _account
-    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) addressNotBlacklisted(_account) {
         _grantRole(BLACKLISTER_ROLE, _account);
     }
 
@@ -97,14 +108,15 @@ contract SolarGreenToken is ERC20, ERC20Burnable, AccessControl {
     ) public onlyRole(BLACKLISTER_ROLE) {
         require(
             !hasRole(DEFAULT_ADMIN_ROLE, _account),
-            "account has DEFAULT_ADMIN_ROLE"
+            "unacceptable for ADMIN"
         );
         require(
             !hasRole(BLACKLISTER_ROLE, _account),
-            "account has BLACKLISTER_ROLE"
+            "unacceptable for BLACKLISTER"
         );
         require(!isBlacklisted(_account), "already blacklisted");
         blacklist[_account] = true;
+        emit EventBlacklistChange(msg.sender, _account, true);
     }
 
     function removeFromBlacklist(
@@ -112,5 +124,6 @@ contract SolarGreenToken is ERC20, ERC20Burnable, AccessControl {
     ) public onlyRole(BLACKLISTER_ROLE) {
         require(isBlacklisted(_account), "not blacklisted");
         blacklist[_account] = false;
+        emit EventBlacklistChange(msg.sender, _account, false);
     }
 }
