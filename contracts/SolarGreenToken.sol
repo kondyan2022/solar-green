@@ -30,7 +30,7 @@ contract SolarGreenToken is ERC20, ERC20Burnable, AccessControl {
         return blacklist[_account];
     }
 
-    function withDecimals(uint256 _amount) public view returns (uint256) {
+    function withDecimals(uint _amount) public view returns (uint) {
         return _amount * 10 ** decimals();
     }
 
@@ -42,18 +42,18 @@ contract SolarGreenToken is ERC20, ERC20Burnable, AccessControl {
 
     function mint(
         address to,
-        uint256 amount
+        uint amount
     ) public onlyRole(DEFAULT_ADMIN_ROLE) addressNotBlacklisted(to) {
         _mint(to, amount);
     }
 
-    function burn(uint256 value) public override onlyRole(DEFAULT_ADMIN_ROLE) {
+    function burn(uint value) public override onlyRole(DEFAULT_ADMIN_ROLE) {
         super.burn(value);
     }
 
     function burnFrom(
         address account,
-        uint256 value
+        uint value
     )
         public
         override
@@ -65,7 +65,7 @@ contract SolarGreenToken is ERC20, ERC20Burnable, AccessControl {
 
     function transfer(
         address to,
-        uint256 value
+        uint value
     )
         public
         override
@@ -79,7 +79,7 @@ contract SolarGreenToken is ERC20, ERC20Burnable, AccessControl {
     function transferFrom(
         address from,
         address to,
-        uint256 value
+        uint value
     )
         public
         override
