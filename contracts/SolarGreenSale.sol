@@ -12,7 +12,7 @@ error VestingLockedTime(uint requested, uint available);
 error SalesEnds(uint currentTime, uint endSalesTime);
 
 contract SolarGreenSale {
-    uint _price;
+    uint _priceInWei;
     // uint priceUSDT;
     IERC20Metadata private token;
     address payable public owner;
@@ -35,8 +35,8 @@ contract SolarGreenSale {
         _;
     }
 
-    function price() external view returns (uint256) {
-        return _price;
+    function priceInWei() external view returns (uint256) {
+        return _priceInWei;
     }
 
     function setEndSalesTime(uint newTime) external onlyOwner {
@@ -48,17 +48,21 @@ contract SolarGreenSale {
         return vestingList[account];
     }
 
+    function availableTokens() external view returns (uint) {
+        return token.balanceOf(address(this)) - vestingTokens;
+    }
+
     constructor(IERC20Metadata _token, uint startPrice) {
         token = _token;
         endSaleTime = block.timestamp + 5 weeks;
         walletLimit = 50000 * 10 ** token.decimals();
-        _price = startPrice;
+        _priceInWei = startPrice;
         vestingTokens = 0;
         owner = payable(msg.sender);
     }
 
-    function setPrice(uint newPrice) external onlyOwner {
-        _price = newPrice;
+    function setPriceInWei(uint newPrice) external onlyOwner {
+        _priceInWei = newPrice;
     }
 
     function buy() public payable {
@@ -66,25 +70,21 @@ contract SolarGreenSale {
             revert SalesEnds(block.timestamp, endSaleTime);
         }
 
-        uint amount = (msg.value * 10 ** token.decimals()) / _price;
+        uint amount = (msg.value * 10 ** token.decimals()) / _priceInWei;
         if (amount < 1) {
-            revert InvalidSum(amount);
+            revert InvalidSum(msg.value);
         }
         uint totalBuy = amount + vestingList[msg.sender];
         if (totalBuy > walletLimit) {
             revert WalletLimit(totalBuy, walletLimit);
         }
-        uint currentBalance = token.balanceOf(address(this));
-        if (currentBalance <= vestingTokens) {
-            revert InsufficientTokens(amount, 0);
-        }
-        uint freeTokens = currentBalance - vestingTokens;
+        uint freeTokens = token.balanceOf(address(this)) - vestingTokens;
         if (amount > freeTokens) {
             revert InsufficientTokens(amount, freeTokens);
         }
         vestingList[msg.sender] += amount;
         vestingTokens += amount;
-        emit Sale(msg.sender, amount, _price, msg.value);
+        emit Sale(msg.sender, amount, _priceInWei, msg.value);
     }
 
     function topUp() external payable onlyOwner {}
@@ -94,7 +94,7 @@ contract SolarGreenSale {
     }
 
     function transferTokensTo(address account, uint amount) public {
-        if (amount > vestingList[account]) {
+        if (amount > vestingList[msg.sender]) {
             revert InsufficientTokens(amount, vestingList[msg.sender]);
         }
 
@@ -102,7 +102,7 @@ contract SolarGreenSale {
             revert VestingLockedTime(block.timestamp, unlockTime);
         }
         token.transfer(account, amount);
-        vestingList[account] -= amount;
+        vestingList[msg.sender] -= amount;
         vestingTokens -= amount;
     }
 
