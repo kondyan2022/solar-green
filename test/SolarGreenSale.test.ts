@@ -256,7 +256,7 @@ describe("Solar Green Token Shop", function () {
   });
   describe("withdraw funds by owner", function () {
     it("owner should be withdraw", async function () {
-      const { shop, deployer, user1, user2 } = await loadFixture(deploy);
+      const { shop, token, deployer, user1, user2 } = await loadFixture(deploy);
 
       const amount = ethers.parseEther("0.5"); //0.5 ether = 10token
       await (await shop.connect(user1).buy({ value: amount })).wait();
@@ -275,6 +275,10 @@ describe("Solar Green Token Shop", function () {
         [-500000000n, 500000000n]
       );
 
+      await expect(
+        shop["withdraw(uint256,address)"](1n, token)
+      ).to.be.revertedWith("Failed to send Ether");
+
       const currentBalance = await ethers.provider.getBalance(shop);
       const tx3 = await shop["withdraw()"]();
       await tx3.wait();
@@ -289,9 +293,19 @@ describe("Solar Green Token Shop", function () {
         shop,
         "InsufficientFunds"
       );
+      await expect(shop["withdraw(uint256)"](1n)).to.be.revertedWithCustomError(
+        shop,
+        "InsufficientFunds"
+      );
+      await expect(
+        shop["withdraw(uint256,address)"](1n, ethers.ZeroAddress)
+      ).to.be.revertedWith("zero address");
+      await expect(
+        shop["withdraw(uint256,address)"](1n, user1)
+      ).to.be.revertedWithCustomError(shop, "InsufficientFunds");
     });
 
-    it("only owner should be withdraw", async function () {
+    it("only owner should be withdraw funds", async function () {
       const { shop, user1, user2 } = await loadFixture(deploy);
 
       const amount = ethers.parseEther("0.5"); //0.5 ether = 10token
@@ -303,6 +317,9 @@ describe("Solar Green Token Shop", function () {
       await expect(
         shop.connect(user2)["withdraw(uint256)"](1n)
       ).to.be.revertedWith("not a owner");
+      await expect(shop.connect(user2)["withdraw()"]()).to.be.revertedWith(
+        "not a owner"
+      );
     });
   });
   describe("withdraw tokens by owner", function () {
@@ -349,6 +366,38 @@ describe("Solar Green Token Shop", function () {
         [shop, deployer],
         [-freeTokens, freeTokens]
       );
+
+      await expect(shop["withdrawTokens()"]()).to.be.revertedWith(
+        "zero free tokens"
+      );
+      await expect(
+        shop["withdrawTokens(uint256)"](1n)
+      ).to.be.revertedWithCustomError(shop, "InsufficientTokens");
+      await expect(
+        shop["withdrawTokens(uint256,address)"](1n, user1)
+      ).to.be.revertedWithCustomError(shop, "InsufficientTokens");
+      await expect(
+        shop["withdrawTokens(uint256,address)"](1n, ethers.ZeroAddress)
+      ).to.be.revertedWith("zero address");
+    });
+    it("withdraw tokens only owner", async function () {
+      const { shop, token, user1 } = await loadFixture(deploy);
+
+      await expect(
+        shop.connect(user1)["withdrawTokens()"]()
+      ).to.be.revertedWith("not a owner");
+
+      await expect(
+        shop.connect(user1)["withdrawTokens(uint256)"](1n)
+      ).to.be.revertedWith("not a owner");
+      await expect(
+        shop.connect(user1)["withdrawTokens(uint256,address)"](1n, user1)
+      ).to.be.revertedWith("not a owner");
+      await expect(
+        shop
+          .connect(user1)
+          ["withdrawTokens(uint256,address)"](1n, ethers.ZeroAddress)
+      ).to.be.revertedWith("not a owner");
     });
   });
 });

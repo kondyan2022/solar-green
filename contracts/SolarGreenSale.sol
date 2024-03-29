@@ -87,8 +87,6 @@ contract SolarGreenSale {
         emit Sale(msg.sender, amount, _priceInWei, msg.value);
     }
 
-    function topUp() external payable onlyOwner {}
-
     receive() external payable {
         buy();
     }
@@ -133,6 +131,7 @@ contract SolarGreenSale {
 
     function withdrawTokens() external onlyOwner {
         uint available = token.balanceOf(address(this)) - vestingTokens;
+        require(available > 0, "zero free tokens");
         withdrawTokens(available, msg.sender);
     }
 
