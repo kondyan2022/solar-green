@@ -13,8 +13,8 @@ error SalesEnds(uint currentTime, uint endSalesTime);
 
 contract SolarGreenSale {
     uint _priceInWei;
-    // uint priceUSDT;
-    IERC20Metadata private token;
+    // uint priceInUSDT;
+    IERC20Metadata private immutable token;
     address payable public owner;
     uint public constant unlockTime = 1735682400; // 01.01.2025
     uint public endSaleTime;
@@ -28,7 +28,13 @@ contract SolarGreenSale {
         uint indexed price,
         uint total
     );
-    event PriceChanged(uint timestamp, uint price);
+
+    event TransferTokens(
+        address indexed buyer,
+        address indexed to,
+        uint amount
+    );
+    event PriceChanged(uint timestamp, uint newprice);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "not a owner");
@@ -102,6 +108,7 @@ contract SolarGreenSale {
         token.transfer(account, amount);
         vestingList[msg.sender] -= amount;
         vestingTokens -= amount;
+        emit TransferTokens(msg.sender, account, amount);
     }
 
     function transferTokens(uint amount) external {

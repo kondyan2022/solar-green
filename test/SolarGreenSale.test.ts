@@ -366,6 +366,13 @@ describe("Solar Green Token Shop", function () {
         [shop, deployer],
         [-freeTokens, freeTokens]
       );
+    });
+    it("should be not withdraw tokens if it is not enough or zero receiver", async function () {
+      const { shop, user1 } = await loadFixture(deploy);
+      await expect(
+        shop["withdrawTokens(uint256,address)"](1n, ethers.ZeroAddress)
+      ).to.be.revertedWith("zero address");
+      await (await shop["withdrawTokens()"]()).wait();
 
       await expect(shop["withdrawTokens()"]()).to.be.revertedWith(
         "zero free tokens"
@@ -376,11 +383,9 @@ describe("Solar Green Token Shop", function () {
       await expect(
         shop["withdrawTokens(uint256,address)"](1n, user1)
       ).to.be.revertedWithCustomError(shop, "InsufficientTokens");
-      await expect(
-        shop["withdrawTokens(uint256,address)"](1n, ethers.ZeroAddress)
-      ).to.be.revertedWith("zero address");
     });
-    it("withdraw tokens only owner", async function () {
+
+    it("should be withdraw tokens only owner", async function () {
       const { shop, token, user1 } = await loadFixture(deploy);
 
       await expect(
