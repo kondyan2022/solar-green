@@ -12,7 +12,7 @@ error SalesEnds(uint currentTime, uint endSalesTime);
 
 contract SolarGreenSale {
     uint _price;
-    IERC20Metadata private immutable token;
+    IERC20Metadata internal immutable token;
     address payable public owner;
     uint public constant unlockTime = 1735682400; // 01.01.2025
     uint public endSaleTime;
@@ -69,9 +69,7 @@ contract SolarGreenSale {
         _price = newPrice;
     }
 
-    function getAmountForPushcase(
-        uint value
-    ) public view virtual returns (uint) {
+    function getAmountForBuy(uint value) public view virtual returns (uint) {
         return (value * 10 ** token.decimals()) / _price;
     }
 
@@ -80,7 +78,7 @@ contract SolarGreenSale {
             revert SalesEnds(block.timestamp, endSaleTime);
         }
 
-        uint amount = getAmountForPushcase(msg.value);
+        uint amount = getAmountForBuy(msg.value);
         if (amount < 1) {
             revert InvalidSum(msg.value);
         }

@@ -14,7 +14,6 @@ error SalesEnds(uint currentTime, uint endSalesTime);
 
 contract SolarGreenSaleUSDT is SolarGreenSale {
     IERC20Metadata private immutable usdtToken;
-    IERC20Metadata private immutable token;
     AggregatorV3Interface internal dataFeed;
 
     constructor(
@@ -41,9 +40,7 @@ contract SolarGreenSaleUSDT is SolarGreenSale {
     function setAggregator(AggregatorV3Interface _dataFeed) external onlyOwner {
         dataFeed = _dataFeed;
     }
-    function getAmountForPushcase(
-        uint value
-    ) public view override returns (uint) {
+    function getAmountForBuy(uint value) public view override returns (uint) {
         uint usdtRate = uint(getRateUSDT());
         return (value * usdtRate * 10 ** token.decimals()) / (_price * 10 ** 8);
     }
