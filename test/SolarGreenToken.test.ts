@@ -106,7 +106,7 @@ describe("Solar Green Token", function () {
         token.connect(user1).removeFromBlacklist(user3)
       ).to.revertedWithCustomError(token, "AccessControlUnauthorizedAccount");
     });
-    it("should be reverted with error if add exist or remove absent for blacklist ", async function () {
+    it("should be reverted with error in case adding existing or removing absent address", async function () {
       const { token, user3 } = await loadFixture(deploy);
 
       await (await token.addToBlacklist(user3)).wait();
@@ -141,7 +141,7 @@ describe("Solar Green Token", function () {
         token.connect(user1).addToBlacklist(deployer)
       ).to.revertedWith("unacceptable for ADMIN");
     });
-    it("should not be accepted transfer tokens if sender or address in blacklist ", async function () {
+    it("should not be accepted transfer tokens if sender or address is in blacklist ", async function () {
       const { token, deployer, user1, user2, user3 } = await loadFixture(
         deploy
       );
@@ -277,7 +277,7 @@ describe("Solar Green Token", function () {
       );
     });
 
-    it("tokens should be burned from address(it needs approve by address owner)", async function () {
+    it("tokens should be burned from address(the approval from the address owner is required)", async function () {
       const { token, deployer, user1 } = await loadFixture(deploy);
       const amount = await token.withDecimals(10);
       const initialSupply = await token.totalSupply();
@@ -320,7 +320,7 @@ describe("Solar Green Token", function () {
       );
     });
 
-    it("tokens should not be burned if not enough", async function () {
+    it("tokens should not be burned if there are not enough", async function () {
       const { token, deployer, user1 } = await loadFixture(deploy);
       const amount = await token.withDecimals(10);
       const initialSupply = await token.totalSupply();
@@ -365,7 +365,7 @@ describe("Solar Green Token", function () {
         [-amount / 2n, amount / 2n]
       );
     });
-    it("tokens should not be transferred if not enough", async function () {
+    it("tokens should not be transferred if there are not enough", async function () {
       const { token, deployer, user1 } = await loadFixture(deploy);
       const amount = await token.withDecimals(10);
       const initialSupply = await token.totalSupply();
@@ -381,7 +381,7 @@ describe("Solar Green Token", function () {
       ).to.be.revertedWithCustomError(token, "ERC20InsufficientBalance");
     });
 
-    it("token should be transferred by transferFrom func (it needs approve by address owner) ", async function () {
+    it("token should be transferred by transferFrom func (the approval from the address owner is required) ", async function () {
       const { token, deployer, user1, user2 } = await loadFixture(deploy);
       const amount = await token.withDecimals(10);
       const initialSupply = await token.totalSupply();
@@ -429,7 +429,7 @@ describe("Solar Green Token", function () {
       );
     });
 
-    it("token should not be transferred by transferFrom func if not enough", async function () {
+    it("token should not be transferred by transferFrom func if there are not enough", async function () {
       const { token, deployer, user1, user2 } = await loadFixture(deploy);
       const amount = await token.withDecimals(10);
       const initialSupply = await token.totalSupply();

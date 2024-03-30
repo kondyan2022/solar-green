@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.20;
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 error InvalidSum(uint sum);
 error InsufficientTokens(uint requested, uint available);
@@ -12,8 +11,7 @@ error VestingLockedTime(uint requested, uint available);
 error SalesEnds(uint currentTime, uint endSalesTime);
 
 contract SolarGreenSale {
-    uint _priceInWei;
-    // uint priceInUSDT;
+    uint _price;
     IERC20Metadata private immutable token;
     address payable public owner;
     uint public constant unlockTime = 1735682400; // 01.01.2025
@@ -41,8 +39,8 @@ contract SolarGreenSale {
         _;
     }
 
-    function priceInWei() external view returns (uint256) {
-        return _priceInWei;
+    function price() external view returns (uint256) {
+        return _price;
     }
 
     function setEndSalesTime(uint newTime) external onlyOwner {
@@ -62,13 +60,19 @@ contract SolarGreenSale {
         token = _token;
         endSaleTime = block.timestamp + 5 weeks;
         walletLimit = 50000 * 10 ** token.decimals();
-        _priceInWei = startPrice;
+        _price = startPrice;
         vestingTokens = 0;
         owner = payable(msg.sender);
     }
 
-    function setPriceInWei(uint newPrice) external onlyOwner {
-        _priceInWei = newPrice;
+    function setPrice(uint newPrice) external onlyOwner {
+        _price = newPrice;
+    }
+
+    function getAmountForPushcase(
+        uint value
+    ) public view virtual returns (uint) {
+        return (value * 10 ** token.decimals()) / _price;
     }
 
     function buy() public payable {
@@ -76,7 +80,7 @@ contract SolarGreenSale {
             revert SalesEnds(block.timestamp, endSaleTime);
         }
 
-        uint amount = (msg.value * 10 ** token.decimals()) / _priceInWei;
+        uint amount = getAmountForPushcase(msg.value);
         if (amount < 1) {
             revert InvalidSum(msg.value);
         }
@@ -90,7 +94,7 @@ contract SolarGreenSale {
         }
         vestingList[msg.sender] += amount;
         vestingTokens += amount;
-        emit Sale(msg.sender, amount, _priceInWei, msg.value);
+        emit Sale(msg.sender, amount, _price, msg.value);
     }
 
     receive() external payable {

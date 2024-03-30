@@ -28,14 +28,14 @@ describe("Solar Green Token Shop", function () {
   }
 
   describe("Deployment", function () {
-    it("should created", async function () {
+    it("should be created", async function () {
       const { token, shop } = await loadFixture(deploy);
 
       expect(await token.getAddress()).to.be.properAddress;
       expect(await shop.getAddress()).to.be.properAddress;
     });
 
-    it("should set end sale date + 5 weeks after deployment", async function () {
+    it("should be set final sales date + 5 weeks after deployment", async function () {
       const { shop } = await loadFixture(deploy);
       const tx = shop.deploymentTransaction();
       const block = await ethers.provider.getBlock(Number(tx?.blockNumber));
@@ -45,7 +45,7 @@ describe("Solar Green Token Shop", function () {
       );
     });
 
-    it("should had 01.01.2025 as unlock time of vesting list ", async function () {
+    it("should be set 01.01.2025 as unlock time of vesting list ", async function () {
       const { shop } = await loadFixture(deploy);
 
       expect(await shop.unlockTime()).to.be.eq(
@@ -53,7 +53,7 @@ describe("Solar Green Token Shop", function () {
       );
     });
 
-    it("should had 50% tokens of initial mint for sale", async function () {
+    it("should have 50% tokens initial mint for sales", async function () {
       const { shop, token, deployer } = await loadFixture(deploy);
 
       expect(await token.balanceOf(shop)).to.be.eq(
@@ -63,19 +63,19 @@ describe("Solar Green Token Shop", function () {
   });
 
   describe("Sales", function () {
-    it("only owner should set sell price in wei", async function () {
+    it("only owner should be set the selling price", async function () {
       const { shop, user1 } = await loadFixture(deploy);
       const priceInWei = 2n * 10n ** 18n;
-      (await shop.setPriceInWei(priceInWei)).wait();
+      (await shop.setPrice(priceInWei)).wait();
 
-      expect(await shop.priceInWei()).to.be.eq(priceInWei);
+      expect(await shop.price()).to.be.eq(priceInWei);
 
-      await expect(
-        shop.connect(user1).setPriceInWei(startPrice)
-      ).to.be.revertedWith("not a owner");
+      await expect(shop.connect(user1).setPrice(startPrice)).to.be.revertedWith(
+        "not a owner"
+      );
     });
 
-    it("end sales date should be set least 10 minutes later from the current one", async function () {
+    it("should be set the final sales date at least 10 minutes later from the current moment", async function () {
       const { shop } = await loadFixture(deploy);
       await expect(
         shop.setEndSalesTime(Math.floor(Date.now() / 1000 + 590))
@@ -86,7 +86,7 @@ describe("Solar Green Token Shop", function () {
       expect(await shop.endSaleTime()).to.be.eq(endSaleTime);
     });
 
-    it("end sales date should be set only by owner", async function () {
+    it("should be set the final sales date only by owner", async function () {
       const { shop, user1 } = await loadFixture(deploy);
       await expect(
         shop.connect(user1).setEndSalesTime(Math.floor(Date.now() / 1000 + 660))
@@ -95,7 +95,7 @@ describe("Solar Green Token Shop", function () {
 
     it("tokens should be sold to users ", async function () {
       const { shop, token, user1, user2, user3 } = await loadFixture(deploy);
-      const price = await shop.priceInWei();
+      const price = await shop.price();
       const tokenDecimals = await token.decimals();
       const users = [
         { user: user1, pay: "1" },
@@ -142,7 +142,7 @@ describe("Solar Green Token Shop", function () {
         (await token.withDecimals(toSaleAmount)) - totalTokens * 2n
       );
     });
-    it("tokens should not be sold to users after end of sale ", async function () {
+    it("tokens should not be sold to users after the final sales date ", async function () {
       const { shop, user1 } = await loadFixture(deploy);
       await time.setNextBlockTimestamp(
         Math.floor(Date.now() / 1000 + +5 * 7 * 24 * 60 * 60)
@@ -151,10 +151,10 @@ describe("Solar Green Token Shop", function () {
         shop.connect(user1).buy({ value: ethers.parseEther("1") })
       ).to.be.revertedWithCustomError(shop, "SalesEnds");
     });
-    it("should not be sold less than smallest token part", async function () {
+    it("should not be sold less than the smallest token's part", async function () {
       const { shop, user1 } = await loadFixture(deploy);
       const priceInWei = 2n * 10n ** 18n;
-      (await shop.setPriceInWei(priceInWei)).wait(); //2ETH = 1 token)
+      (await shop.setPrice(priceInWei)).wait(); //2ETH = 1 token)
       await expect(
         shop.connect(user1).buy({ value: 1 })
       ).to.be.revertedWithCustomError(shop, "InvalidSum");
@@ -163,7 +163,7 @@ describe("Solar Green Token Shop", function () {
     it("should not be sold more than 50K tokens per wallet", async function () {
       const { shop, user1, user2 } = await loadFixture(deploy);
       const priceInWei = 10n ** 14n; //1ETH = 10000 token
-      (await shop.setPriceInWei(priceInWei)).wait(); //2ETH = 1 token)
+      (await shop.setPrice(priceInWei)).wait(); //2ETH = 1 token)
 
       await shop.connect(user1).buy({ value: ethers.parseEther("4") });
 
@@ -179,7 +179,7 @@ describe("Solar Green Token Shop", function () {
       const { token, shop, user1, user2 } = await loadFixture(deploy);
       const priceInWei = 10n ** 14n; //1ETH = 10000 token
 
-      (await shop.setPriceInWei(priceInWei)).wait();
+      (await shop.setPrice(priceInWei)).wait();
       await shop.connect(user1).buy({ value: ethers.parseEther("4") });
       const revertTokens = await token.withDecimals(49950000);
 
@@ -191,7 +191,7 @@ describe("Solar Green Token Shop", function () {
     });
   });
 
-  describe("Token transfer by buyer", function () {
+  describe("Buyer transfer tokens", function () {
     it("should not be transfer before 01.01.2025", async function () {
       const { shop, deployer, user1 } = await loadFixture(deploy);
       await (await shop.buy({ value: ethers.parseEther("1") })).wait();
@@ -223,7 +223,7 @@ describe("Solar Green Token Shop", function () {
       ).to.be.changeTokenBalances(token, [shop, user2], [-1000000n, 1000000n]);
     });
 
-    it("should not transferred when amount is over", async function () {
+    it("should not be transferred when amount is over", async function () {
       const { shop, token, user1, user2 } = await loadFixture(deploy);
       await (
         await shop.connect(user1).buy({ value: ethers.parseEther("1") })
@@ -240,7 +240,7 @@ describe("Solar Green Token Shop", function () {
       ).to.be.revertedWithCustomError(shop, "InsufficientTokens");
     });
 
-    it("should not transferred when address is zero", async function () {
+    it("should not be transferred when address is zero", async function () {
       const { shop, token, user1 } = await loadFixture(deploy);
       await (
         await shop.connect(user1).buy({ value: ethers.parseEther("1") })
@@ -254,8 +254,8 @@ describe("Solar Green Token Shop", function () {
       ).to.be.revertedWithCustomError(token, "ERC20InvalidReceiver");
     });
   });
-  describe("withdraw funds by owner", function () {
-    it("owner should be withdraw", async function () {
+  describe("withdrawing funds by owner", function () {
+    it("owner should withdraw", async function () {
       const { shop, token, deployer, user1, user2 } = await loadFixture(deploy);
 
       const amount = ethers.parseEther("0.5"); //0.5 ether = 10token
@@ -305,7 +305,7 @@ describe("Solar Green Token Shop", function () {
       ).to.be.revertedWithCustomError(shop, "InsufficientFunds");
     });
 
-    it("only owner should be withdraw funds", async function () {
+    it("only owner should  withdraw", async function () {
       const { shop, user1, user2 } = await loadFixture(deploy);
 
       const amount = ethers.parseEther("0.5"); //0.5 ether = 10token
@@ -322,8 +322,8 @@ describe("Solar Green Token Shop", function () {
       );
     });
   });
-  describe("withdraw tokens by owner", function () {
-    it("owner should be withdraw tokens", async function () {
+  describe("withdrawing tokens by owner", function () {
+    it("owner should withdraw tokens", async function () {
       const { shop, token, deployer, user1, user2, user3 } = await loadFixture(
         deploy
       );
@@ -367,7 +367,7 @@ describe("Solar Green Token Shop", function () {
         [-freeTokens, freeTokens]
       );
     });
-    it("should be not withdraw tokens if it is not enough or zero receiver", async function () {
+    it("should not be withdrawing tokens if they are not enough or zero receiver", async function () {
       const { shop, user1 } = await loadFixture(deploy);
       await expect(
         shop["withdrawTokens(uint256,address)"](1n, ethers.ZeroAddress)
@@ -385,7 +385,7 @@ describe("Solar Green Token Shop", function () {
       ).to.be.revertedWithCustomError(shop, "InsufficientTokens");
     });
 
-    it("should be withdraw tokens only owner", async function () {
+    it("should withdraw tokens only by owner", async function () {
       const { shop, token, user1 } = await loadFixture(deploy);
 
       await expect(
