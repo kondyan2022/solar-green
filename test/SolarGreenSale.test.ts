@@ -145,7 +145,7 @@ describe("Solar Green Token Shop", function () {
     it("tokens should not be sold to users after the final sales date ", async function () {
       const { shop, user1 } = await loadFixture(deploy);
       await time.setNextBlockTimestamp(
-        Math.floor(Date.now() / 1000 + +5 * 7 * 24 * 60 * 60)
+        Math.floor(Date.now() / 1000 + +5 * 7 * 24 * 60 * 60 + 10)
       );
       await expect(
         shop.connect(user1).buy({ value: ethers.parseEther("1") })

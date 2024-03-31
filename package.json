@@ -1,16 +1,17 @@
 {
   "name": "solar-green",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "solar-green token and Shop for sales",
+  "main": "",
   "scripts": {
     "test": "npx hardhat test",
-    "compile": "npx hardhat compile",
-    "deploy": "npx hardhat ignition deploy ./ignition/modules/MyToken.js --network localhost"
+    "test:gas": "REPORT_GAS=true npx hardhat test",
+    "test:cover": "npx hardhat coverage",
+    "compile": "npx hardhat compile"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Yan Kondratenko",
+  "license": "MIT",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "hardhat": "^2.22.2"

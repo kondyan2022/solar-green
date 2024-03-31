@@ -5,7 +5,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 error InvalidSum(uint sum);
 error InsufficientTokens(uint requested, uint available);
-error InsufficientFunds(uint requested, uint available);
+error InsufficientFunds(uint requested, uint available, string currency);
 error WalletLimit(uint requested, uint available);
 error VestingLockedTime(uint requested, uint available);
 error SalesEnds(uint currentTime, uint endSalesTime);
@@ -24,7 +24,8 @@ contract SolarGreenSale {
         address indexed buyer,
         uint amount,
         uint indexed price,
-        uint total
+        uint total,
+        string currency
     );
 
     event TransferTokens(
@@ -36,6 +37,13 @@ contract SolarGreenSale {
 
     modifier onlyOwner() {
         require(msg.sender == owner, "not a owner");
+        _;
+    }
+
+    modifier beforeEndSaleTime() {
+        if (block.timestamp > endSaleTime) {
+            revert SalesEnds(block.timestamp, endSaleTime);
+        }
         _;
     }
 
@@ -73,15 +81,12 @@ contract SolarGreenSale {
         return (value * 10 ** token.decimals()) / _price;
     }
 
-    function buy() public payable {
-        if (block.timestamp > endSaleTime) {
-            revert SalesEnds(block.timestamp, endSaleTime);
-        }
-
+    function buy() public payable beforeEndSaleTime {
         uint amount = getAmountForBuy(msg.value);
         if (amount < 1) {
             revert InvalidSum(msg.value);
         }
+
         uint totalBuy = amount + vestingList[msg.sender];
         if (totalBuy > walletLimit) {
             revert WalletLimit(totalBuy, walletLimit);
@@ -92,7 +97,7 @@ contract SolarGreenSale {
         }
         vestingList[msg.sender] += amount;
         vestingTokens += amount;
-        emit Sale(msg.sender, amount, _price, msg.value);
+        emit Sale(msg.sender, amount, _price, msg.value, "ETH");
     }
 
     receive() external payable {
@@ -124,7 +129,7 @@ contract SolarGreenSale {
 
     function withdraw(uint _amount) external onlyOwner {
         if (address(this).balance < _amount) {
-            revert InsufficientFunds(_amount, address(this).balance);
+            revert InsufficientFunds(_amount, address(this).balance, "ETH");
         }
         payable(owner).transfer(_amount);
     }
@@ -132,7 +137,7 @@ contract SolarGreenSale {
     function withdraw(uint _amount, address payable _to) external onlyOwner {
         require(_to != address(0), "zero address");
         if (address(this).balance < _amount) {
-            revert InsufficientFunds(_amount, address(this).balance);
+            revert InsufficientFunds(_amount, address(this).balance, "ETH");
         }
         bool sent = _to.send(_amount);
         require(sent, "Failed to send Ether");
