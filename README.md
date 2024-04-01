@@ -1,13 +1,27 @@
-# Sample Hardhat Project
+# Solar green test project
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
+# How to Run
 
-Try running some of the following tasks:
+1. Clone the repository to your computer.
+2. Install dependencies using the `npm install` command.
+3. Start the project with the `npm run compile` command.
+
+# Try running some of the following tasks:
+
+- Compile the project
 
 ```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat ignition deploy ./ignition/modules/Lock.ts
+npm run compile
+```
+
+- Test project using Hardhat
+
+```shell
+npm run test
+```
+
+- Test project with coverage using Hardhat
+
+```shell
+npm run coverage
 ```

@@ -5,12 +5,10 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import {SolarGreenSale} from "./SolarGreenSale.sol";
 
-error InvalidSum(uint sum);
 error InsufficientTokens(uint requested, uint available);
 error InsufficientFunds(uint requested, uint available, string currency);
 error InsufficientAllowance(uint requested, uint available);
 error WalletLimit(uint requested, uint available);
-error VestingLockedTime(uint requested, uint available);
 error SalesEnds(uint currentTime, uint endSalesTime);
 
 contract SolarGreenSaleUSDT is SolarGreenSale {
