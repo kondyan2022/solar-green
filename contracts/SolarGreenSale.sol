@@ -97,13 +97,7 @@ contract SolarGreenSale {
         }
         vestingList[msg.sender] += amount;
         vestingTokens += amount;
-        emit Sale(
-            msg.sender,
-            amount,
-            (msg.value * 10 ** 18) / amount,
-            msg.value,
-            "ETH"
-        );
+        emit Sale(msg.sender, amount, _price, msg.value, "ETH");
     }
 
     receive() external payable {
