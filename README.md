@@ -33,3 +33,9 @@ npm run coverage
 - [`SolarGreenSaleUSDT.sol`](./contracts/SolarGreenSaleUSDT.sol) &mdash; contract for tokens sale is in ETH and USDT. The contract inherits the [`SolarGreenSale.sol`](./contracts/SolarGreenSale.sol). The token price is set in USDT. The price in ETH is determined dynamically based on the ETH/USD from the Chainlink contract.
 - [`MockV3Aggregator.sol`](./contracts/MockV3Aggregator.sol) &mdash; emulate of the ETH/USD from the Chainlink contract for hardhat tests
 - [`USDTTestToken.sol`](./contracts/USDTTestToken.sol) &mdash; emulate [test USDT contract ](https://sepolia.etherscan.io/address/0x1531bc5de10618c511349f8007c08966e45ce8ef#writeContract) for hardhat tests
+
+## Deployment to the Sepolia Testnet
+
+[`SolarGreenSaleUSDT.sol`](https://sepolia.etherscan.io/address/0x9be5126ae3d60e870cfefa1f10d5ad63712ab42e)
+
+[`SolarGreenToken.sol`](https://sepolia.etherscan.io/address/0x26c31102e1c8856a112a85b16578d7b0700ce196)
