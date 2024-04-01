@@ -36,6 +36,10 @@ contract SolarGreenSaleUSDT is SolarGreenSale {
         return answer;
     }
 
+    function balanceUSDT() public view returns (uint) {
+        return usdtToken.balanceOf(address(this));
+    }
+
     function setAggregator(AggregatorV3Interface _dataFeed) external onlyOwner {
         dataFeed = _dataFeed;
     }

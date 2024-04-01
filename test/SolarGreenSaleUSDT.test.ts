@@ -194,6 +194,7 @@ describe("USDT Shop", function () {
           }, //0.108 token = 0.005 ETH = 17.28USDT
         ];
         const totalTokens = users.reduce((acc, elem) => acc + elem.tokens, 0n);
+        const totalSum = users.reduce((acc, elem) => acc + elem.sum, 0n);
 
         for (let [
           index,
@@ -214,10 +215,13 @@ describe("USDT Shop", function () {
             [shop, user],
             [sum, -sum]
           );
+
           expect(await shop.vestingBalanceOf(user)).to.be.eq(tokens);
         }
 
         expect(await shop.vestingTokens()).to.be.eq(totalTokens);
+
+        expect(await shop.balanceUSDT()).to.be.eq(totalSum);
       });
       it("tokens should not be sold to users after the final sales date ", async function () {
         const { shop, user1 } = await loadFixture(deploy);
